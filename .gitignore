@@ -1,0 +1,26 @@
+# Credentialed data must NEVER be committed (MIMIC-III / PhysioNet DUA)
+data/
+*.csv
+*.parquet
+*.npz
+*.pt
+*.joblib
+*.xlsx
+
+# Manuscript / paper artifacts
+*.docx
+*.pdf
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

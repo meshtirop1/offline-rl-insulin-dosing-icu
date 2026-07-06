@@ -1,0 +1,210 @@
+# Offline Reinforcement Learning for ICU Insulin Dosing
+
+A reproducible benchmark and off-policy evaluation of offline reinforcement
+learning (RL) for insulin dosing in a general intensive care unit (ICU)
+population, built from the MIMIC-III critical care database.
+
+**Main result:** under careful evaluation, a learned insulin-dosing policy does
+**not** outperform ICU clinicians. It matches clinician value on a glucose
+time-in-range proxy (fitted Q evaluation is level with clinicians; the
+doubly-robust estimate is slightly below), it is statistically indistinguishable
+from clinicians on real in-hospital mortality, and the small apparent proxy-reward
+advantage does not hold up when the reward definition is changed. The contribution
+is an honest, reusable benchmark rather than a claim that RL beats existing care.
+
+---
+
+## What makes this benchmark different
+
+Most prior offline-RL work on ICU glucose control models a single action, the
+intravenous insulin infusion rate, on a narrow cohort. This benchmark instead:
+
+1. **Models the delivery routes actually used at the bedside** — subcutaneous
+   bolus, intravenous bolus, and intravenous infusion — over a general
+   medical/surgical ICU population.
+2. **Treats scheduled basal insulin as state context, not as an action.** Long-
+   and intermediate-acting insulin is given on a plan rather than in response to
+   each glucose reading, so it belongs in the patient state. Putting it in the
+   action space caused an earlier version of the policy to abandon basal coverage,
+   which this design removes.
+3. **Evaluates honestly.** Four off-policy estimators (clinician value, fitted Q
+   evaluation, per-decision weighted importance sampling, weighted doubly robust),
+   patient-level bootstrap confidence intervals, a real-outcome check against
+   in-hospital mortality, and a reward-sensitivity analysis across four reward
+   definitions.
+
+---
+
+## Data access (not included in this repository)
+
+This project uses **credentialed** data that cannot be redistributed. Nothing
+derived from individual patients is stored here. To reproduce the study you must
+obtain the data yourself:
+
+1. Create a [PhysioNet](https://physionet.org/) account, complete the required
+   CITI "Data or Specimens Only Research" training, and sign the data use
+   agreement.
+2. Download the curated glucose-insulin dataset:
+   **Curated Data for Describing Blood Glucose Management in the Intensive Care
+   Unit** (v1.0.1), https://doi.org/10.13026/517s-2q57 — this provides
+   `glucose_insulin_pair.csv`.
+3. Download the three MIMIC-III core tables for outcome linkage:
+   `ADMISSIONS.csv`, `PATIENTS.csv`, `ICUSTAYS.csv` from
+   **MIMIC-III Clinical Database v1.4**, https://doi.org/10.13026/C2XW26.
+4. Place the files where the scripts expect them and update the path constants at
+   the top of each script in `src/` (see **Configuration** below).
+
+The dataset is a curated extract of MIMIC-III v1.4 (MetaVision records,
+2008–2012): about 9,500 patients, 12,210 ICU stays, and roughly 604,000
+glucose/insulin events, with insulin administrations paired to a preceding
+glucose reading by clinician-defined timing rules.
+
+---
+
+## Repository layout
+
+```
+src/
+  build_episodes.py          Raw CSV -> 4-hour decision bins (state, action, reward)
+  add_outcomes.py            Link MIMIC-III mortality, age, sex, care unit
+  prepare_rl_dataset.py      Discretize actions, standardize state, write tensors
+  train_behavior_cloning.py  Supervised sanity check on the state representation
+  train_cql.py               Discrete Conservative Q-Learning policy
+  evaluate_ope.py            Off-policy evaluation (clinician / FQE / WIS / WDR)
+  reward_ablation.py         Retrain + re-evaluate under four reward definitions
+  gen_figures.py             Figures from the pipeline outputs
+  run_pipeline.py            Convenience driver (prepare -> train -> evaluate)
+reports/                     Text result reports (metrics, tables, ablations)
+```
+
+---
+
+## Requirements
+
+- Python 3.10 or newer
+- See `requirements.txt`. The pipeline runs on CPU; no GPU is required.
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Configuration
+
+Each script in `src/` reads its input and output paths from constants near the
+top of the file (for example `DATA`, `OUT_DIR`, and the raw CSV path in
+`build_episodes.py`). Edit these to match where you placed the data on your
+machine before running the pipeline.
+
+---
+
+## Reproducing the study
+
+Run the stages in order:
+
+```bash
+# 1. Build 4-hour decision bins from the curated glucose-insulin CSV
+python src/build_episodes.py
+
+# 2. Link MIMIC-III outcomes and demographics
+python src/add_outcomes.py
+
+# 3. Discretize the action space and write RL tensors
+python src/prepare_rl_dataset.py
+
+# 4. (Optional) behavior-cloning sanity check on the state
+python src/train_behavior_cloning.py
+
+# 5. Train the Conservative Q-Learning policy
+python src/train_cql.py
+
+# 6. Off-policy evaluation against clinicians (proxy reward)
+python src/evaluate_ope.py
+
+#    ... and against real in-hospital mortality
+python src/evaluate_ope.py --reward-key mortality_reward --report reports/ope_enriched_mortality.md
+
+# 7. Reward-sensitivity ablation (retrains + re-evaluates four rewards)
+python src/reward_ablation.py
+
+# 8. Figures
+python src/gen_figures.py
+```
+
+---
+
+## Method overview
+
+- **Decision process.** Each ICU stay is split into 4-hour bins. The state
+  summarizes recent glucose and its trend, insulin already on board, trailing
+  24-hour basal exposure, and age, sex, and care unit. The action is the reactive
+  short-acting correction: none, or one of three routes crossed with a low, medium,
+  or high dose tertile (ten discrete actions). The reward reads the next bin's
+  glucose on a time-in-range scale, with a terminal survival signal at discharge.
+- **Policy.** Discrete Conservative Q-Learning with a double-DQN target and a
+  Polyak-averaged target network.
+- **Evaluation.** Off-policy value under a softened target policy, estimated four
+  ways, with 200-sample patient bootstrap confidence intervals, against both the
+  glucose proxy and in-hospital mortality.
+
+---
+
+## Results (test split, 95% patient-bootstrap intervals)
+
+| Estimator | Glucose proxy | In-hospital mortality |
+|---|---|---|
+| Clinician (baseline) | +5.54 [5.35, 5.72] | +0.369 [0.353, 0.385] |
+| Fitted Q evaluation | +5.58 [5.42, 5.75] | +0.366 [0.356, 0.378] |
+| Weighted importance sampling | +8.75 [7.12, 11.19] | +1.32 [0.39, 1.70] |
+| Weighted doubly robust | +3.07 [2.04, 4.80] | +0.565 [0.262, 0.705] |
+
+The doubly-robust estimate sits at or below the clinician value on the proxy, and
+every mortality interval includes the clinician value. Importance sampling is the
+high-variance estimator and is reported for completeness. A reward-sensitivity
+analysis (see `reports/reward_ablation.md`) shows the direction of the proxy
+comparison is not stable across reward definitions, so no benefit is claimed.
+
+---
+
+## Citing this work
+
+If you use this benchmark, please cite the data sources it depends on:
+
+- Robles Arévalo A, Mateo-Collado R, Celi LA. Curated Data for Describing Blood
+  Glucose Management in the Intensive Care Unit (v1.0.1). PhysioNet. 2021.
+  https://doi.org/10.13026/517s-2q57
+- Robles Arévalo A, Maley JH, Baker L, et al. Data-driven curation process for
+  describing the blood glucose management in the intensive care unit. Scientific
+  Data. 2021;8:80.
+- Johnson AEW, Pollard TJ, Shen L, et al. MIMIC-III, a freely accessible critical
+  care database. Scientific Data. 2016;3:160035.
+- Goldberger AL, Amaral LAN, Glass L, et al. PhysioBank, PhysioToolkit, and
+  PhysioNet. Circulation. 2000;101(23):e215–e220.
+
+---
+
+## Authors
+
+- Tirop Meshack — Department of Smart Computing, Kyungdong University, Goseong,
+  South Korea
+- Ajax Don Christ Ndikuriyo — Department of Smart Computing, Kyungdong University
+- Nshimirimana Albert — Department of International Business Administration,
+  Kyungdong University
+- Baseem Al-Athwari (corresponding, baseem_cs@v.kduniv.ac.kr) — Department of
+  Smart Computing, Kyungdong University
+
+---
+
+## License
+
+Code is released under the MIT License (see `LICENSE`). The MIMIC-III and curated
+glucose-insulin data are **not** included and are governed by the PhysioNet
+Credentialed Health Data Use Agreement.
+
+---
+
+## Acknowledgements
+
+This work uses the MIMIC-III database and the curated glucose-insulin dataset,
+both made available through PhysioNet. We thank the teams behind those resources.

@@ -1,0 +1,19 @@
+# Off-policy evaluation (test split, patient-disjoint)
+gamma=0.95 target_softmax_tau=0.5 ratio_clip=+/-5.0 prob_floor=0.001 n_bootstrap=200
+test trajectories (ICU stays): 1842
+
+## Estimated discounted return under the PROXY reward
+| estimator | value | 95% CI |
+|---|---|---|
+| clinician_Vpi_b | +0.3685 | [+0.3533, +0.3852] |
+| FQE | +0.3661 | [+0.3556, +0.3776] |
+| WIS | +1.3197 | [+0.3867, +1.6963] |
+| WDR | +0.5646 | [+0.2623, +0.7045] |
+
+## Reading the result
+Clinician (logged-policy) value under this proxy reward is +0.3685. The learned policy's WDR estimate is +0.5646 [+0.2623, +0.7045], whose 95% CI is **OVERLAPS** the clinician point estimate. FQE agrees at +0.3661 [+0.3556, +0.3776].
+
+Learned policy agreement with clinician actions (greedy): 0.705
+
+## Caveat (do not skip when writing up)
+These returns are under the time-in-range PROXY reward, not a clinical outcome. A positive gap here is a methods result about the proxy MDP -- it is NOT evidence of reduced hypoglycemia or mortality. Those require the PhysioNet outcome linkage + eICU external validation (see README). Also: WIS is high-variance at this horizon; when FQE and WDR disagree with WIS, trust the doubly-robust WDR, and report all three so reviewers can see the spread.
