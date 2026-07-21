@@ -5,9 +5,9 @@ A trustworthy conclusion has the SAME direction across all variants.
 
 | reward variant | clinician V | WDR | WDR 95% CI | WDR vs clinician |
 |---|---|---|---|---|
-| piecewise | +5.5396 | +7.8633 | [+6.0150, +9.2660] | ABOVE |
-| tir_binary | +6.1689 | +7.5943 | [+6.5182, +8.8390] | ABOVE |
-| asymmetric | +5.4827 | +6.9918 | [+5.8791, +8.2991] | ABOVE |
-| smooth | +2.4267 | +3.6415 | [+1.4115, +5.8394] | OVERLAPS |
+| piecewise | +5.5396 | +3.0742 | [+2.0353, +4.7953] | BELOW |
+| tir_binary | +6.1689 | +5.2609 | [+3.9566, +6.6199] | OVERLAPS |
+| asymmetric | +5.4827 | +5.5145 | [+4.2245, +6.8613] | OVERLAPS |
+| smooth | +2.4267 | +1.4442 | [-0.3021, +2.6844] | OVERLAPS |
 
 **Verdict: UNSTABLE -- direction flips across reward variants; do NOT report a benefit claim**

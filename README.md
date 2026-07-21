@@ -185,9 +185,13 @@ python src/s6_evaluate_ope.py --reward-key mortality_reward \
 
 The doubly-robust estimate sits at or below the clinician value on the proxy, and
 every mortality interval includes the clinician value. Importance sampling is the
-high-variance estimator and is reported for completeness. A reward-sensitivity
-analysis (see `reports/reward_ablation.md`) shows the direction of the proxy
-comparison is not stable across reward definitions, so no benefit is claimed.
+high-variance estimator and is reported for completeness.
+
+A reward-sensitivity analysis (see `reports/reward_ablation.md`) retrains the
+policy under four reward definitions, using the same state and training length as
+the result above. The policy lands below the clinician value under the piecewise
+reward and indistinguishable from it under the other three; under none of them is
+it above the clinicians. No benefit over clinician care is claimed.
 
 ---
 

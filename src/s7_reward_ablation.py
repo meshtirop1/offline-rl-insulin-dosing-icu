@@ -126,8 +126,10 @@ def main():
             train_report = REPORTS / f"cql_{name}.md"
             ope_report = REPORTS / f"ope_{name}.md"
 
+            # train for the same number of epochs as the main policy (config.CQL_EPOCHS)
+            # so each ablation row is directly comparable to the headline result
             subprocess.run([PY, str(SRC / "s5_train_cql.py"),
-                            "--epochs", "40", "--out", str(model_path),
+                            "--epochs", str(cfg.CQL_EPOCHS), "--out", str(model_path),
                             "--report", str(train_report)], check=True)
             subprocess.run([PY, str(SRC / "s6_evaluate_ope.py"),
                             "--qnet", str(model_path), "--report", str(ope_report)], check=True)

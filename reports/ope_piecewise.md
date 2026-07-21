@@ -6,12 +6,12 @@ test trajectories (ICU stays): 1842
 | estimator | value | 95% CI |
 |---|---|---|
 | clinician_Vpi_b | +5.5396 | [+5.3535, +5.7240] |
-| FQE | +6.5506 | [+6.3959, +6.7105] |
-| WIS | +13.4826 | [+11.4054, +14.2025] |
-| WDR | +7.8633 | [+6.0150, +9.2660] |
+| FQE | +5.5846 | [+5.4179, +5.7454] |
+| WIS | +8.7477 | [+7.1169, +11.1862] |
+| WDR | +3.0742 | [+2.0353, +4.7953] |
 
 ## Reading the result
-Clinician (logged-policy) value under this proxy reward is +5.5396. The learned policy's WDR estimate is +7.8633 [+6.0150, +9.2660], whose 95% CI is **ABOVE** the clinician point estimate. FQE agrees at +6.5506 [+6.3959, +6.7105].
+Clinician (logged-policy) value under this proxy reward is +5.5396. The learned policy's WDR estimate is +3.0742 [+2.0353, +4.7953], whose 95% CI is **BELOW** the clinician point estimate. FQE agrees at +5.5846 [+5.4179, +5.7454].
 
 Learned policy agreement with clinician actions (greedy): 0.705
 
