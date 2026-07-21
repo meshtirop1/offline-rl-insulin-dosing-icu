@@ -63,19 +63,27 @@ glucose reading by clinician-defined timing rules.
 
 ## Repository layout
 
+The pipeline is eight numbered stages. Each stage reads what the previous one
+wrote, so the code can be read straight through in order.
+
 ```
+run_pipeline.py              Runs the whole study end to end
 src/
-  build_episodes.py          Raw CSV -> 4-hour decision bins (state, action, reward)
-  add_outcomes.py            Link MIMIC-III mortality, age, sex, care unit
-  prepare_rl_dataset.py      Discretize actions, standardize state, write tensors
-  train_behavior_cloning.py  Supervised sanity check on the state representation
-  train_cql.py               Discrete Conservative Q-Learning policy
-  evaluate_ope.py            Off-policy evaluation (clinician / FQE / WIS / WDR)
-  reward_ablation.py         Retrain + re-evaluate under four reward definitions
-  gen_figures.py             Figures from the pipeline outputs
-  run_pipeline.py            Convenience driver (prepare -> train -> evaluate)
+  config.py                  Every path and hyperparameter, in one place
+  models.py                  Q-network shared by stages 5 and 6
+  s1_build_episodes.py       Raw events   -> 4-hour decision bins        (Sec. 4.1-4.2)
+  s2_add_outcomes.py         Link MIMIC-III mortality and demographics   (Sec. 3)
+  s3_prepare_dataset.py      Discretize actions, standardize state       (Sec. 4.2)
+  s4_behavior_cloning.py     Sanity check on the state representation    (Sec. 4.4, 5.1)
+  s5_train_cql.py            Conservative Q-Learning policy              (Sec. 4.3, 5.2)
+  s6_evaluate_ope.py         Four estimators vs clinicians               (Sec. 4.5, 5.3)
+  s7_reward_ablation.py      Retrain/re-evaluate under four rewards      (Sec. 4.6, 5.4)
+  s8_make_figures.py         Figures used in the paper                   (Figures 1-7)
 reports/                     Text result reports (metrics, tables, ablations)
 ```
+
+No stage imports another, and no path is hardcoded: everything resolves through
+`src/config.py`.
 
 ---
 
@@ -92,44 +100,60 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Each script in `src/` reads its input and output paths from constants near the
-top of the file (for example `DATA`, `OUT_DIR`, and the raw CSV path in
-`build_episodes.py`). Edit these to match where you placed the data on your
-machine before running the pipeline.
+All paths and hyperparameters live in `src/config.py`. Point the two credentialed
+inputs at wherever you downloaded them:
+
+```bash
+# Linux / macOS
+export GLYCEMIC_RAW_DIR=/path/to/glucose-management-mimic   # holds glucose_insulin_pair.csv
+export MIMIC_DIR=/path/to/mimic-iii                         # holds ADMISSIONS/PATIENTS/ICUSTAYS.csv
+```
+
+```powershell
+# Windows PowerShell
+$env:GLYCEMIC_RAW_DIR = "C:\path\to\glucose-management-mimic"
+$env:MIMIC_DIR        = "C:\path\to\mimic-iii"
+```
+
+If unset, they default to `data/raw` and `data/mimic` inside the project. Every
+other path (episodes, tensors, models, reports, figures) is derived automatically.
 
 ---
 
 ## Reproducing the study
 
-Run the stages in order:
+Run everything with one command:
 
 ```bash
-# 1. Build 4-hour decision bins from the curated glucose-insulin CSV
-python src/build_episodes.py
+python run_pipeline.py
+```
 
-# 2. Link MIMIC-III outcomes and demographics
-python src/add_outcomes.py
+Useful variants:
 
-# 3. Discretize the action space and write RL tensors
-python src/prepare_rl_dataset.py
+```bash
+python run_pipeline.py --quick      # smoke test on 200 ICU stays
+python run_pipeline.py --from 5     # resume from stage 5
+python run_pipeline.py --only 6     # run a single stage
+```
 
-# 4. (Optional) behavior-cloning sanity check on the state
-python src/train_behavior_cloning.py
+Or run stages individually:
 
-# 5. Train the Conservative Q-Learning policy
-python src/train_cql.py
+```bash
+python src/s1_build_episodes.py     # raw events -> 4-hour decision bins
+python src/s2_add_outcomes.py       # link mortality, age, sex, care unit
+python src/s3_prepare_dataset.py    # discretize actions, write RL tensors
+python src/s4_behavior_cloning.py   # sanity check on the state
+python src/s5_train_cql.py          # train the policy
+python src/s6_evaluate_ope.py       # evaluate against clinicians (proxy reward)
+python src/s7_reward_ablation.py    # reward-sensitivity analysis
+python src/s8_make_figures.py       # figures
+```
 
-# 6. Off-policy evaluation against clinicians (proxy reward)
-python src/evaluate_ope.py
+To evaluate against real in-hospital mortality instead of the glucose proxy:
 
-#    ... and against real in-hospital mortality
-python src/evaluate_ope.py --reward-key mortality_reward --report reports/ope_enriched_mortality.md
-
-# 7. Reward-sensitivity ablation (retrains + re-evaluates four rewards)
-python src/reward_ablation.py
-
-# 8. Figures
-python src/gen_figures.py
+```bash
+python src/s6_evaluate_ope.py --reward-key mortality_reward \
+       --report reports/ope_enriched_mortality.md
 ```
 
 ---

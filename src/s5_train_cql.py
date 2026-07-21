@@ -25,31 +25,20 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-RL_DIR = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\data\rl")
-OUT_DIR = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\models")
-REPORT = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\reports\cql.md")
+import config as cfg
+from models import QNet
 
-GAMMA = 0.95          # per 4h bin; ~1 day horizon dominates the discount
-ALPHA_CQL = 1.0        # conservative penalty weight (override with --alpha)
-LR = 1e-3
-BATCH_SIZE = 512
-EPOCHS = 60
-TARGET_TAU = 0.005     # polyak averaging rate
-HIDDEN = 128
-SEED = 0
+RL_DIR = cfg.RL_DIR
+OUT_DIR = cfg.MODELS_DIR
+REPORT = cfg.REPORTS_DIR / "cql.md"
 
-
-class QNet(nn.Module):
-    def __init__(self, state_dim: int, n_actions: int):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(state_dim, HIDDEN), nn.ReLU(),
-            nn.Linear(HIDDEN, HIDDEN), nn.ReLU(),
-            nn.Linear(HIDDEN, n_actions),
-        )
-
-    def forward(self, x):
-        return self.net(x)
+GAMMA = cfg.GAMMA
+ALPHA_CQL = cfg.CQL_ALPHA      # conservative penalty weight (override with --alpha)
+LR = cfg.CQL_LR
+BATCH_SIZE = cfg.CQL_BATCH
+EPOCHS = cfg.CQL_EPOCHS
+TARGET_TAU = cfg.CQL_TARGET_TAU
+SEED = cfg.SEED
 
 
 def load_split(name):

@@ -48,12 +48,11 @@ NAN_COLS = ["last_glc", "hours_since_last_glc", "hours_since_last_dose"]
 # care_unit one-hot columns added dynamically if present
 CARE_UNITS = ["MICU", "SICU", "CSRU", "TSICU", "CCU"]
 
-BASE = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing")
-# prefer the outcome-enriched episodes if add_outcomes.py has been run
-DATA = BASE / "data" / "processed" / "episodes_enriched.parquet"
-if not DATA.exists():
-    DATA = BASE / "data" / "processed" / "episodes.parquet"
-OUT_DIR = BASE / "data" / "rl"
+import config as cfg
+
+# prefer the outcome-enriched episodes if stage 2 has been run
+DATA = cfg.EPISODES_ENRICHED if cfg.EPISODES_ENRICHED.exists() else cfg.EPISODES
+OUT_DIR = cfg.RL_DIR
 
 # reactive delivery routes (all short-acting); order defines action-id blocks
 REACTIVE_ROUTES = ["BOLUS_INYECTION", "BOLUS_PUSH", "INFUSION"]

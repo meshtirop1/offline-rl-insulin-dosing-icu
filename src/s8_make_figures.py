@@ -9,11 +9,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-BASE = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing")
-FIG = BASE / "figures"
-FIG.mkdir(exist_ok=True)
-RL = BASE / "data" / "rl"
-REPORTS = BASE / "reports"
+import config as cfg
+
+BASE = cfg.PROJECT_ROOT
+FIG = cfg.FIGURES_DIR
+FIG.mkdir(parents=True, exist_ok=True)
+RL = cfg.RL_DIR
+REPORTS = cfg.REPORTS_DIR
 plt.rcParams.update({"font.size": 11, "font.family": "DejaVu Sans", "axes.spines.top": False,
                      "axes.spines.right": False, "figure.dpi": 150})
 

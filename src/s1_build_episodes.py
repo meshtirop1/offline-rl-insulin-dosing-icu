@@ -48,7 +48,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-BIN_HOURS = 4
+import config as cfg
+
+BIN_HOURS = cfg.BIN_HOURS
 
 STATE_COLS = [
     "last_glc", "glc_slope", "n_glc_readings_in_bin", "hours_since_last_glc",
@@ -243,8 +245,8 @@ def split_by_subject(episodes: pd.DataFrame, seed: int = 0):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--input", default=r"C:\Users\mtiro\Downloads\glycemic\glycemic\glucose_insulin_pair.csv")
-    ap.add_argument("--out", default=r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\data\processed\episodes.parquet")
+    ap.add_argument("--input", default=str(cfg.PAIR_CSV))
+    ap.add_argument("--out", default=str(cfg.EPISODES))
     ap.add_argument("--bin-hours", type=int, default=BIN_HOURS)
     ap.add_argument("--limit-icustays", type=int, default=None, help="debug: only process first N ICU stays")
     args = ap.parse_args()

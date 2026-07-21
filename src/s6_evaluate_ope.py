@@ -47,19 +47,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.ensemble import HistGradientBoostingClassifier
 
-from train_cql import QNet
+import config as cfg
+from models import QNet
 
-RL_DIR = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\data\rl")
-MODELS = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\models")
-REPORT = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\reports\ope.md")
+RL_DIR = cfg.RL_DIR
+MODELS = cfg.MODELS_DIR
+REPORT = cfg.REPORTS_DIR / "ope.md"
 
-GAMMA = 0.95
-TAU = 0.5              # target-policy softmax temperature
-RATIO_CLIP = 5.0       # clip per-step log importance ratio to [-5, 5]
-PROB_FLOOR = 1e-3      # floor on behavior-policy probability
-N_BOOTSTRAP = 200
-FQE_EPOCHS = 40
-SEED = 0
+GAMMA = cfg.GAMMA
+TAU = cfg.OPE_TAU                  # target-policy softmax temperature
+RATIO_CLIP = cfg.OPE_RATIO_CLIP    # clip per-step log importance ratio
+PROB_FLOOR = cfg.OPE_PROB_FLOOR    # floor on behavior-policy probability
+N_BOOTSTRAP = cfg.OPE_N_BOOTSTRAP
+FQE_EPOCHS = cfg.FQE_EPOCHS
+SEED = cfg.SEED
 
 
 # ---------- data / trajectory helpers ----------

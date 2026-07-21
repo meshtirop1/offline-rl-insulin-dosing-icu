@@ -25,20 +25,20 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-BASE = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing")
-EXT = BASE / "data" / "external_needed"
-EPISODES = BASE / "data" / "processed" / "episodes.parquet"
-OUT = BASE / "data" / "processed" / "episodes_enriched.parquet"
+import config as cfg
+
+EPISODES = cfg.EPISODES
+OUT = cfg.EPISODES_ENRICHED
 
 
 def main():
     ep = pd.read_parquet(EPISODES)
 
-    icu = pd.read_csv(EXT / "ICUSTAYS.csv",
+    icu = pd.read_csv(cfg.ICUSTAYS_CSV,
                       usecols=["ICUSTAY_ID", "HADM_ID", "SUBJECT_ID", "FIRST_CAREUNIT", "INTIME"])
-    adm = pd.read_csv(EXT / "ADMISSIONS.csv",
+    adm = pd.read_csv(cfg.ADMISSIONS_CSV,
                       usecols=["HADM_ID", "HOSPITAL_EXPIRE_FLAG"])
-    pat = pd.read_csv(EXT / "PATIENTS.csv", usecols=["SUBJECT_ID", "GENDER", "DOB"])
+    pat = pd.read_csv(cfg.PATIENTS_CSV, usecols=["SUBJECT_ID", "GENDER", "DOB"])
 
     icu["INTIME"] = pd.to_datetime(icu["INTIME"], errors="coerce")
     pat["DOB"] = pd.to_datetime(pat["DOB"], errors="coerce")

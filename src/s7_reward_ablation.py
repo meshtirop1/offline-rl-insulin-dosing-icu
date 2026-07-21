@@ -28,9 +28,11 @@ from pathlib import Path
 
 import numpy as np
 
-RL_DIR = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\data\rl")
-MODELS = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\models")
-REPORTS = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\reports")
+import config as cfg
+
+RL_DIR = cfg.RL_DIR
+MODELS = cfg.MODELS_DIR
+REPORTS = cfg.REPORTS_DIR
 SRC = Path(__file__).parent
 PY = sys.executable
 
@@ -124,10 +126,10 @@ def main():
             train_report = REPORTS / f"cql_{name}.md"
             ope_report = REPORTS / f"ope_{name}.md"
 
-            subprocess.run([PY, str(SRC / "train_cql.py"),
+            subprocess.run([PY, str(SRC / "s5_train_cql.py"),
                             "--epochs", "40", "--out", str(model_path),
                             "--report", str(train_report)], check=True)
-            subprocess.run([PY, str(SRC / "evaluate_ope.py"),
+            subprocess.run([PY, str(SRC / "s6_evaluate_ope.py"),
                             "--qnet", str(model_path), "--report", str(ope_report)], check=True)
 
             clin, wdr, lo, hi = parse_ope_report(ope_report)

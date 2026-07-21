@@ -30,9 +30,11 @@ STATE_COLS = [
     "bin_index",
 ]
 
-DATA = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\data\processed\episodes.parquet")
-OUT_DIR = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\models")
-REPORT = Path(r"C:\Users\mtiro\Downloads\glycemic\rl_insulin_dosing\reports\behavior_cloning.md")
+import config as cfg
+
+DATA = cfg.EPISODES_ENRICHED if cfg.EPISODES_ENRICHED.exists() else cfg.EPISODES
+OUT_DIR = cfg.MODELS_DIR
+REPORT = cfg.REPORTS_DIR / "behavior_cloning.md"
 
 
 def majority_baseline_report(y_true, majority_label):
